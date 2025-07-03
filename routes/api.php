@@ -37,6 +37,7 @@ Route::prefix('courses')->controller(CourseController::class)->group(function ()
 });
 
 Route::prefix('lessons')->controller(LessonController::class)->group(function () {
+    Route::get('/', 'index');                 // List all lessons`
     Route::post('/', 'store');                // Create a lesson
     Route::get('{lesson}', 'show');           // View a specific lesson
     Route::put('{lesson}', 'update');         // Update a lesson
