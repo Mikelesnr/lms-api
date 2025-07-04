@@ -6,4 +6,5 @@ Route::get('/', function () {
     return ['Laravel' => app()->version()];
 });
 
-require __DIR__.'/auth.php';
+
+Route::prefix('auth')->group(base_path('routes/auth.php'));

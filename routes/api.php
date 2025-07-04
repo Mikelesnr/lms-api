@@ -78,3 +78,5 @@ Route::prefix('quiz-answers')->controller(QuizAnswerController::class)->group(fu
     Route::put('{answer}', 'update');
     Route::delete('{answer}', 'destroy');
 });
+
+Route::prefix('auth')->group(base_path('routes/auth.php'));

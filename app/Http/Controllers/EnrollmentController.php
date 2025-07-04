@@ -23,7 +23,17 @@ class EnrollmentController extends Controller
 
     public function showUserCourses(Request $request, $userId)
     {
-        $courses = \App\Models\Course::whereHas('enrollments', fn($q) => $q->where('user_id', $userId))->get();
+        $courses = \App\Models\Course::whereHas(
+            'enrollments',
+            fn($q) =>
+            $q->where('user_id', $userId)
+        )
+            ->with([
+                'instructor:id,name',
+                'lessons:id,course_id,title'
+            ])
+            ->withCount('lessons')
+            ->get();
 
         return response()->json($courses);
     }
