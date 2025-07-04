@@ -25,10 +25,13 @@ class CourseController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'user_id' => 'required|exists:users,id', // temporary until auth
         ]);
 
-        $course = Course::create($request->only('title', 'description', 'user_id'));
+        $course = Course::create([
+            'title' => $request->input('title'),
+            'description' => $request->input('description'),
+            'user_id' => $request->user()->id,
+        ]);
 
         return response()->json($course, 201);
     }
