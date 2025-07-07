@@ -12,6 +12,7 @@ class CompletedLesson extends Model
     protected $fillable = [
         'user_id',
         'lesson_id',
+        'grade',
     ];
 
     public function user()
