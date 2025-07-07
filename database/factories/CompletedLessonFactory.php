@@ -22,6 +22,7 @@ class CompletedLessonFactory extends Factory
         return [
             'user_id' => null,    // set in seeder
             'lesson_id' => null,  // set in seeder
+            'grade' => $this->faker->numberBetween(50, 100),
         ];
     }
 }

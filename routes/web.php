@@ -7,4 +7,4 @@ Route::get('/', function () {
 });
 
 
-Route::prefix('auth')->group(base_path('routes/auth.php'));
+// Route::prefix('auth')->group(base_path('routes/auth.php'));

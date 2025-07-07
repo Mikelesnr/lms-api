@@ -1,1 +1,3 @@
 *.sqlite*
+seeders/
+factories/

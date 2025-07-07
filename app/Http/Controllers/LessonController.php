@@ -27,6 +27,35 @@ class LessonController extends Controller
         return response()->json($lesson);
     }
 
+    public function studentView($id)
+    {
+        $lesson = Lesson::with(['quiz', 'course.lessons'])->findOrFail($id);
+
+        $orderedLessons = $lesson->course->lessons->sortBy('order')->values();
+        $currentIndex = $orderedLessons->search(fn($l) => $l->id === $lesson->id);
+
+        $previousLesson = $currentIndex > 0
+            ? $orderedLessons[$currentIndex - 1]
+            : null;
+
+        $nextLesson = $currentIndex < $orderedLessons->count() - 1
+            ? $orderedLessons[$currentIndex + 1]
+            : null;
+
+        return response()->json([
+            'id' => $lesson->id,
+            'title' => $lesson->title,
+            'content' => $lesson->content,
+            'video_url' => $lesson->video_url,
+            'quiz' => $lesson->quiz,
+            'previous_lesson' => $previousLesson
+                ? ['id' => $previousLesson->id, 'title' => $previousLesson->title]
+                : null,
+            'next_lesson' => $nextLesson
+                ? ['id' => $nextLesson->id, 'title' => $nextLesson->title]
+                : null,
+        ]);
+    }
 
     public function update(Request $request, \App\Models\Lesson $lesson)
     {

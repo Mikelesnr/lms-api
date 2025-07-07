@@ -27,6 +27,8 @@ class CompletedLessonSeeder extends Seeder
                 CompletedLesson::firstOrCreate([
                     'user_id' => $enrollment->user_id,
                     'lesson_id' => $lesson->id,
+                ], [
+                    'grade' => rand(50, 100),
                 ]);
             }
         }

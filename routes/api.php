@@ -39,9 +39,10 @@ Route::prefix('courses')->controller(CourseController::class)->group(function ()
 Route::prefix('lessons')->controller(LessonController::class)->group(function () {
     Route::get('/', 'index');                 // List all lessons`
     Route::post('/', 'store');                // Create a lesson
-    Route::get('{lesson}', 'show');           // View a specific lesson
-    Route::put('{lesson}', 'update');         // Update a lesson
-    Route::delete('{lesson}', 'destroy');     // Delete a lesson
+    Route::get('/{lesson}', 'show');           // View a specific lesson
+    Route::get('/student-lessons/{id}', [LessonController::class, 'studentView']); // View a lesson for students
+    Route::put('/{lesson}', 'update');         // Update a lesson
+    Route::delete('/{lesson}', 'destroy');     // Delete a lesson
 });
 
 Route::prefix('enrollments')->controller(EnrollmentController::class)->group(function () {
@@ -49,7 +50,11 @@ Route::prefix('enrollments')->controller(EnrollmentController::class)->group(fun
     Route::get('/user/{userId}', 'showUserCourses');
 });
 
-Route::post('/completed-lessons', [CompletedLessonController::class, 'store']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/enrollments/me', [EnrollmentController::class, 'showMyCourses']);
+    Route::post('/completed-lessons', [CompletedLessonController::class, 'store']);
+    // Other protected student routes...
+});
 
 Route::prefix('progress')->controller(ProgressController::class)->group(function () {
     Route::get('/', 'index'); // Get progress for all courses user is enrolled in
@@ -63,6 +68,10 @@ Route::prefix('quizzes')->controller(QuizController::class)->group(function () {
     Route::delete('{quiz}', 'destroy');
 });
 
+// Get quiz by lesson
+// This route retrieves the quiz associated with a specific lesson
+// It uses the lesson ID to find the quiz and returns it along with its questions and answers
+Route::get('/lessons/{lesson}/quiz', [QuizController::class, 'getByLesson']);
 
 Route::prefix('quiz-questions')->controller(QuizQuestionController::class)->group(function () {
     Route::post('/', 'store');
