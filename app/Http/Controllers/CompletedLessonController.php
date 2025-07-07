@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\CompletedLesson;
+use App\Models\Enrollment;
 
 class CompletedLessonController extends Controller
 {
@@ -56,5 +57,53 @@ class CompletedLessonController extends Controller
                 ];
             }),
         ]);
+    }
+
+    public function activeEnrollmentCount(Request $request)
+    {
+        $user = $request->user();
+
+        $count = Enrollment::where('user_id', $user->id)
+            ->whereNull('completed_at')
+            ->count();
+
+        return response()->json(['active_enrollments' => $count]);
+    }
+
+    public function completedQuizCount(Request $request)
+    {
+        $user = $request->user();
+
+        $count = CompletedLesson::where('user_id', $user->id)->count();
+
+        return response()->json(['completed_quizzes' => $count]);
+    }
+
+    public function quizAnalyticsByCourse(Request $request)
+    {
+        $userId = $request->user()->id;
+
+        $completed = \App\Models\CompletedLesson::with('lesson.course')
+            ->where('user_id', $userId)
+            ->get();
+
+        $grouped = $completed->groupBy(fn($c) => $c->lesson->course->id)
+            ->map(function ($lessons) {
+                $course = $lessons->first()->lesson->course;
+                return [
+                    'course_id' => $course->id,
+                    'course_title' => $course->title,
+                    'lessons' => $lessons->map(function ($l) {
+                        return [
+                            'lesson_id' => $l->lesson_id,
+                            'title' => $l->lesson->title,
+                            'grade' => $l->grade,
+                        ];
+                    })->values(),
+                ];
+            })
+            ->values();
+
+        return response()->json(['quiz_analytics' => $grouped]);
     }
 }
