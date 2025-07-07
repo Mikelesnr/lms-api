@@ -19,6 +19,19 @@ Route::post('/register', [RegisteredUserController::class, 'store'])
     ->middleware('guest')
     ->name('register');
 
+
+Route::get('/courses/categories', [CourseController::class, 'categories']);
+
+// 📚 Get all published courses with pagination
+Route::get('/courses/all', [CourseController::class, 'getAll']);
+
+// 🔍 Filter courses by title, instructor, or general keyword (with pagination)
+Route::get('/courses/filter', [CourseController::class, 'filter']);
+
+// 🔥 Get 10 featured (random, cached) courses
+Route::get('/courses/featured', [CourseController::class, 'featured']);
+
+
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
     ->middleware('guest')
     ->name('login');
@@ -57,6 +70,15 @@ Route::middleware('auth:sanctum')->group(function () {
         CompletedLessonController::class,
         'getGrade',
     ]);
+
+    // Student self-enroll route (uses authenticated user internally)
+    Route::post('/my/enrollments', [EnrollmentController::class, 'selfEnroll']);
+    // Student self-unenroll route (uses authenticated user internally)
+    Route::delete('/my/enrollments', [EnrollmentController::class, 'selfUnenroll']);
+
+    // Unenroll a user from a course (admin/instructor use)
+    Route::delete('/enrollments/{user}/{course}', [EnrollmentController::class, 'destroy']);
+
     // Other protected student routes...
 });
 

@@ -12,7 +12,14 @@ class Course extends Model
     protected $fillable = [
         'title',
         'description',
-        'user_id', // instructor ID
+        'category', // course category`
+        'user_id',          // instructor ID
+        'is_published',
+        'published_at',
+    ];
+
+    protected $casts = [
+        'published_at' => 'datetime',
     ];
 
     // Relationships

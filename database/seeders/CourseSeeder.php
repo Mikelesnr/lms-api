@@ -15,7 +15,7 @@ class CourseSeeder extends Seeder
         $instructors = User::where('role', \App\Enums\UserRole::Instructor)->get();
 
         foreach ($instructors as $instructor) {
-            Course::factory(3)->create([
+            Course::factory(10)->create([
                 'user_id' => $instructor->id,
             ]);
         }
