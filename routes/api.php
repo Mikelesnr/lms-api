@@ -53,6 +53,10 @@ Route::prefix('enrollments')->controller(EnrollmentController::class)->group(fun
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/enrollments/me', [EnrollmentController::class, 'showMyCourses']);
     Route::post('/completed-lessons', [CompletedLessonController::class, 'store']);
+    Route::get('/completed-lessons/grade/{user?}', [
+        CompletedLessonController::class,
+        'getGrade',
+    ]);
     // Other protected student routes...
 });
 
