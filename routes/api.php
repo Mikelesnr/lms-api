@@ -79,6 +79,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Unenroll a user from a course (admin/instructor use)
     Route::delete('/enrollments/{user}/{course}', [EnrollmentController::class, 'destroy']);
 
+    // 📊 Dashboard Overview for students
+    Route::get('/me/active-enrollments-count', [CompletedLessonController::class, 'activeEnrollmentCount']);
+    Route::get('/me/completed-quizzes-count', [CompletedLessonController::class, 'completedQuizCount']);
+
+    // 📘 Quiz Analytics per Course for students
+    Route::get('/me/quiz-analytics', [CompletedLessonController::class, 'quizAnalyticsByCourse']);
+
+
     // Other protected student routes...
 });
 
