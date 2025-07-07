@@ -14,12 +14,37 @@ class CourseFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    const categories = [
+        'Development',
+        'Business',
+        'Finance & Accounting',
+        'IT & Software',
+        'Office Productivity',
+        'Personal Development',
+        'Design',
+        'Marketing',
+        'Lifestyle',
+        'Photography & Video',
+        'Health & Fitness',
+        'Music',
+        'Teaching & Academics',
+        'Language Learning',
+        'Engineering & Architecture',
+        'Data Science',
+        'Cybersecurity',
+        'Project Management',
+        'Game Development',
+        'AI & Machine Learning',
+    ];
+
     public function definition(): array
     {
         return [
-            'title' => fake()->sentence(4),
-            'description' => fake()->paragraph(),
-            // 'user_id' is set in the seeder
+            'title' => $this->faker->sentence(4),
+            'description' => $this->faker->paragraph(3),
+            'category' => $this->faker->randomElement(self::categories),
+            'is_published' => true,
+            'published_at' => now(),
         ];
     }
 }
