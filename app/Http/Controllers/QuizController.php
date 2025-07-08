@@ -4,19 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\Quiz;
 use Illuminate\Http\Request;
+use App\Models\Lesson;
 
 class QuizController extends Controller
 {
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'lesson_id' => 'required|exists:lessons,id',
-            'title' => 'nullable|string|max:255',
+            'title' => 'required|string|max:255',
         ]);
 
-        $quiz = \App\Models\Quiz::create($request->all());
+        // 🚫 Check if the lesson already has a quiz
+        $existing = \App\Models\Quiz::where('lesson_id', $data['lesson_id'])->first();
 
-        return response()->json($quiz, 201);
+        if ($existing) {
+            return response()->json(['message' => 'This lesson already has a quiz.'], 409);
+        }
+
+        // ✅ Create new quiz
+        $quiz = \App\Models\Quiz::create([
+            'lesson_id' => $data['lesson_id'],
+            'title' => $data['title'],
+        ]);
+
+        return response()->json(['quiz' => $quiz], 201);
     }
 
     public function getByLesson($lessonId)

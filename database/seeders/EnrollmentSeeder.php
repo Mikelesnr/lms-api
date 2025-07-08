@@ -29,7 +29,7 @@ class EnrollmentSeeder extends Seeder
                     'course_id' => $course->id,
                 ], [
                     'started_at' => now()->subDays(rand(1, 30)),
-                    'completed_at' => rand(0, 1) ? now()->subDays(rand(0, 10)) : null,
+                    'completed_at' => rand(0, 0) ? now()->subDays(rand(0, 10)) : null,
                 ]);
             }
         }
