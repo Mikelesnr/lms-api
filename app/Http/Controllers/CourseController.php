@@ -4,14 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use Illuminate\Http\Request;
+use App\Enums\UserRole;
 use Illuminate\Support\Facades\Cache;
 
 class CourseController extends Controller
 {
     // List all courses (for students)
-    public function index()
+    public function index(Request $request)
     {
-        return Course::with('instructor')->latest()->get();
+        $authUser = $request->user();
+
+        $query = Course::query();
+
+        if ($authUser->role === UserRole::Admin && $request->has('user_id')) {
+            // Admin viewing courses by a specific instructor
+            $query->where('user_id', $request->input('user_id'));
+        } else {
+            // Instructor seeing their own courses
+            $query->where('user_id', $authUser->id);
+        }
+
+        return $query->latest()->get();
     }
 
     // Get all courses (for API) paginated
