@@ -8,7 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Enums\UserRole;
-
+use App\Models\Enrollment;
+use App\Models\Course;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -49,5 +50,30 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'role' => UserRole::class, // Cast role to UserRole enum
         ];
+    }
+
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class, 'user_id');
+    }
+
+    public function courses()
+    {
+        return $this->hasMany(Course::class, 'user_id');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::Admin;
+    }
+
+    public function isInstructor(): bool
+    {
+        return $this->role === UserRole::Instructor;
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->role === UserRole::Student;
     }
 }

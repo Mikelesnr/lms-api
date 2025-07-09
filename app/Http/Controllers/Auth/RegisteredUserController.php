@@ -25,7 +25,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:student,instructor'], // ⬅️ validate the role
+            'role' => ['required', 'string', 'in:student,instructor'],
         ]);
 
         $user = User::create([
@@ -40,5 +40,29 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return response()->json($user, 201);
+    }
+
+    public function storeAdmin(Request $request): JsonResponse
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->string('password')),
+            'role' => UserRole::Admin, // locked-in role
+        ]);
+
+        event(new Registered($user));
+        // Auth::login($user);
+
+        return response()->json([
+            'message' => 'Admin registered successfully.',
+            'user' => $user,
+        ], 201);
     }
 }

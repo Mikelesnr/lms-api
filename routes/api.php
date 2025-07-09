@@ -2,8 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\LessonController;
@@ -12,6 +10,10 @@ use App\Http\Controllers\ProgressController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\QuizQuestionController;
 use App\Http\Controllers\QuizAnswerController;
+use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\AdminCourseController;
+use App\Http\Controllers\InstructorOverviewController;
+use App\Http\Controllers\AdminDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,9 +48,9 @@ Route::get('/progress/{course}', [ProgressController::class, 'show']);
 */
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn(Request $request) => $request->user());
-    Route::get('/instructor/overview', [\App\Http\Controllers\InstructorOverviewController::class, 'show']);
-    Route::get('/instructor/quiz-stats', [\App\Http\Controllers\InstructorOverviewController::class, 'quizStats']);
-    Route::get('/instructor/students', [\App\Http\Controllers\InstructorOverviewController::class, 'students']);
+    Route::get('/instructor/overview', [InstructorOverviewController::class, 'show']);
+    Route::get('/instructor/quiz-stats', [InstructorOverviewController::class, 'quizStats']);
+    Route::get('/instructor/students', [InstructorOverviewController::class, 'students']);
 
     Route::get('/enrollments/me', [EnrollmentController::class, 'showMyCourses']);
     Route::get('/enrollments/user/{userId}', [EnrollmentController::class, 'showUserCourses']);
@@ -91,6 +93,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/completed-lessons', [CompletedLessonController::class, 'store']);
     Route::get('/completed-lessons/grade/{user?}', [CompletedLessonController::class, 'getGrade']);
+});
+
+Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin-only'])->group(function () {
+    Route::get('instructors', [AdminUserController::class, 'instructors']);
+    Route::get('students', [AdminUserController::class, 'students']);
+    Route::get('courses', [AdminCourseController::class, 'index']);
+    Route::get('courses/{id}', [AdminCourseController::class, 'show']);
+    Route::put('users/{user}', [AdminUserController::class, 'update']); // Edit
+    Route::patch('users/{user}', [AdminUserController::class, 'updateRole']); // Role only
+    Route::delete('users/{user}', [AdminUserController::class, 'destroy']);   // Delete
+    Route::get('/stats', [AdminDashboardController::class, 'index']);
+    Route::post('/users/{user}/send-password-reset', [AdminUserController::class, 'sendPasswordReset']);
 });
 
 /*

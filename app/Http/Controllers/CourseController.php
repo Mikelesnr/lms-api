@@ -30,7 +30,7 @@ class CourseController extends Controller
     // Get all courses (for API) paginated
     public function getAll()
     {
-        $courses = \App\Models\Course::where('is_published', true)
+        $courses = Course::where('is_published', true)
             ->latest()
             ->paginate(12); // Adjust per page as needed
 
