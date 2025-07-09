@@ -9,6 +9,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Routing\UrlGenerator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot(UrlGenerator $url): void
     {
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
             return config('app.frontend_url') . "/auth/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
@@ -47,6 +48,11 @@ class AppServiceProvider extends ServiceProvider
                     'hash' => sha1($notifiable->getEmailForVerification()),
                 ]
             );
+
+
+            if (env('APP_ENV') == 'production') {
+                $url->forceScheme('https');
+            }
         });
 
 
