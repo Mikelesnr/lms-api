@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Support\Facades\Log;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
-            return config('app.frontend_url') . "/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
+            return config('app.frontend_url') . "/auth/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
         });
         if (app()->environment('production')) {
             URL::forceScheme('https');
@@ -32,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
         VerifyEmail::createUrlUsing(function ($notifiable) {
             // Protect against unexpected nulls — only run during email generation
             if (! $notifiable) {
-                \Log::warning('VerifyEmail::createUrlUsing received null $notifiable.');
+                Log::warning('VerifyEmail::createUrlUsing received null $notifiable.');
                 return URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), []);
             }
 
@@ -45,5 +48,12 @@ class AppServiceProvider extends ServiceProvider
                 ]
             );
         });
+
+
+        // 🛡️ Role-based access gates using helper methods
+        Gate::define('admin-only', fn(User $user) => $user->isAdmin());
+        Gate::define('instructor-only', fn(User $user) => $user->isInstructor());
+        Gate::define('student-only', fn(User $user) => $user->isStudent());
+        Gate::define('create-admin', fn($user) => $user->role === 'super_admin');
     }
 }
