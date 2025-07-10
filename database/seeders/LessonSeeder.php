@@ -17,7 +17,7 @@ class LessonSeeder extends Seeder
         $courses = Course::all();
 
         foreach ($courses as $course) {
-            Lesson::factory(rand(4, 6))->create([
+            Lesson::factory(rand(3, 4))->create([
                 'course_id' => $course->id,
             ]);
         }
