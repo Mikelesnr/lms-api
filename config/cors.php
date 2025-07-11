@@ -15,23 +15,11 @@ return [
     |
     */
 
-    'paths' => [
-        'api/*',
-        'sanctum/csrf-cookie',
-        'auth/login',
-        'auth/logout',
-        "auth/register",
-        'auth/forgot-password',
-        'auth/reset-password',
-        'auth/email/verification-notification',
-        'auth/verify-email/{id}/{hash}',
-        'auth/user',
-        'auth/user/{userId}',
-    ],
+    'paths' => ['*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'https://lms-frontend-6qso.onrender.com')],
+    'allowed_origins' => [env('FRONTEND_URL', 'https://lms-manage.netlify.app')],
 
     'allowed_origins_patterns' => [],
 
@@ -41,6 +29,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
+    'supports_credentials' => false,
 
 ];

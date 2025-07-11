@@ -14,6 +14,7 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminCourseController;
 use App\Http\Controllers\InstructorOverviewController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,8 +47,17 @@ Route::get('/progress/{course}', [ProgressController::class, 'show']);
 | Authenticated Routes
 |--------------------------------------------------------------------------
 */
+
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return response()->json($request->user());
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', fn(Request $request) => $request->user());
+    Route::put('/users/${id}', [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
     Route::get('/instructor/overview', [InstructorOverviewController::class, 'show']);
     Route::get('/instructor/quiz-stats', [InstructorOverviewController::class, 'quizStats']);
     Route::get('/instructor/students', [InstructorOverviewController::class, 'students']);
