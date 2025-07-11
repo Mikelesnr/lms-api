@@ -26,18 +26,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(UrlGenerator $url): void
     {
-        ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
-            return config('app.frontend_url') . "/auth/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";
-        });
+        // Force HTTPS in production
         if (app()->environment('production')) {
-            URL::forceScheme('https');
-        };
-        // Customizing the email verification notification
+            $url->forceScheme('https');
+        }
+
+        // 🔐 Customize password reset URL for frontend SPA
+        ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
+            $email = $notifiable->getEmailForPasswordReset();
+            return config('app.frontend_url') . "/auth/password-reset/{$token}?email={$email}";
+        });
+
+        // ✉️ Customize email verification URL for frontend SPA
         VerifyEmail::createUrlUsing(function ($notifiable) {
-            // Protect against unexpected nulls — only run during email generation
-            if (! $notifiable) {
-                Log::warning('VerifyEmail::createUrlUsing received null $notifiable.');
-                return URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), []);
+            if (! $notifiable || ! method_exists($notifiable, 'getEmailForVerification')) {
+                Log::warning('Verification email generation failed — missing or invalid notifiable.');
+                return config('app.frontend_url') . '/auth/login?error=missing-user';
             }
 
             return URL::temporarySignedRoute(
@@ -48,18 +52,13 @@ class AppServiceProvider extends ServiceProvider
                     'hash' => sha1($notifiable->getEmailForVerification()),
                 ]
             );
-
-
-            if (env('APP_ENV') == 'production') {
-                $url->forceScheme('https');
-            }
         });
 
 
-        // 🛡️ Role-based access gates using helper methods
+        // 🛡️ Role-based access gates
         Gate::define('admin-only', fn(User $user) => $user->isAdmin());
         Gate::define('instructor-only', fn(User $user) => $user->isInstructor());
         Gate::define('student-only', fn(User $user) => $user->isStudent());
-        Gate::define('create-admin', fn($user) => $user->role === 'super_admin');
+        Gate::define('create-admin', fn(User $user) => $user->role === 'super_admin');
     }
 }

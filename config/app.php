@@ -53,7 +53,7 @@ return [
     */
 
     'url' => env('APP_URL', 'https://lms-api-i62r.onrender.com'),
-    'frontend_url' => env('FRONTEND_URL', 'https://lms-frontend-6qso.onrender.com'),
+    'frontend_url' => env('FRONTEND_URL', 'https://lms-manage.netlify.app'),
 
 
     /*
