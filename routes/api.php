@@ -36,6 +36,7 @@ Route::get('/lessons/student-lessons/{id}', [LessonController::class, 'studentVi
 Route::get('/lessons/{lesson}/quiz', [QuizController::class, 'getByLesson']);
 
 Route::get('/quizzes/{quiz}', [QuizController::class, 'show']);
+Route::get('/student/quizzes/{quizId}', [QuizController::class, 'getById']);
 Route::get('/quiz-questions/{question}', [QuizQuestionController::class, 'show']);
 Route::get('/quiz-answers/{answer}', [QuizAnswerController::class, 'show']);
 
@@ -54,8 +55,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', fn(Request $request) => $request->user());
-    Route::put('/users/${id}', [UserController::class, 'update']);
+    Route::put('/users/{id}', [UserController::class, 'update']);
     Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
     Route::get('/instructor/overview', [InstructorOverviewController::class, 'show']);
@@ -75,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::post('/courses', [CourseController::class, 'store']);
+    Route::get('/courses/{course}/lessons', [CourseController::class, 'getCourseLessons']);
     Route::get('/courses', [CourseController::class, 'index']);
     Route::put('/courses/{course}', [CourseController::class, 'update']);
     Route::delete('/courses/{course}', [CourseController::class, 'destroy']);

@@ -3,71 +3,75 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest; // Keep this if you have a custom LoginRequest
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse; // Use JsonResponse for API
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Session;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
      * Handle an incoming authentication request.
-     * Authenticate the user and issue a Sanctum token.
+     * Authenticate the user and return specific user data for cookie-based auth.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(LoginRequest $request): JsonResponse // Changed return type to JsonResponse
+    public function store(LoginRequest $request): JsonResponse
     {
+
+        // Log the X-XSRF-TOKEN header to the backend terminal
+        Log::info('Login Request received.');
         // Validate credentials (from LoginRequest or directly here)
-        $request->validate([
+        $validated = Validator::make($request->toArray(), [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-        ]);
+        ])->validate();
 
         // Attempt to authenticate the user
-        if (! Auth::attempt($request->only('email', 'password'))) {
+        // Auth::attempt will automatically log the user in and create a session
+        if (! Auth::attempt(['email' => $request->get('email'), 'password' => $request->get('password')])) {
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')], // Laravel's default authentication failed message
             ]);
         }
+        // Regenerate the session ID to prevent session fixation attacks
+        Session::regenerate();
 
         // Get the authenticated user
-        $user = $request->user();
+        $user = Auth::user();
 
-        // Optional: Revoke existing tokens for this user before issuing a new one
-        // This is good practice to ensure only one active token per login,
-        // enhancing security by making previous tokens unusable.
-        $user->tokens()->delete();
-
-        // Create a new Sanctum token for the user
-        // You can specify abilities (scopes) if needed, e.g., ['read', 'write']
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        // Return the user and the token
+        // Return only the desired user attributes for the frontend
         return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'message' => 'Login successful, token issued.'
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'email_verified_at' => $user->email_verified_at,
+            ],
+            'message' => 'Login successful.'
         ]);
     }
-
 
     /**
      * Destroy an authenticated session.
      */
-
-    /**
-     * Destroy an authenticated session and revoke the current token.
-     */
-    public function destroy(Request $request): JsonResponse // Changed return type to JsonResponse
+    public function destroy(Request $request): JsonResponse
     {
-        // This line gets the currently active token that was used for the request
-        // and deletes it, effectively logging out the user from that token.
-        $request->user()->currentAccessToken()->delete();
+        // For cookie-based authentication, we simply log out the user from the session.
+        // Sanctum's session guard will handle clearing the session and invalidating the cookie.
+        Auth::guard('web')->logout();
+
+        // Invalidate the session and regenerate the CSRF token
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json([
-            'message' => 'Logged out successfully, token revoked.'
+            'message' => 'Logged out successfully.'
         ]);
     }
 }
