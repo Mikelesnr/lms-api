@@ -42,8 +42,19 @@ class QuizController extends Controller
         return response()->json($quiz);
     }
 
+    public function getById($quizId)
+    {
+        $quiz = Quiz::with('questions.answers')->where('id', $quizId)->first();
 
-    public function show(\App\Models\Quiz $quiz)
+        if (!$quiz) {
+            return response()->json(null, 404); // Optional: return 204 or null gracefully
+        }
+
+        return response()->json($quiz);
+    }
+
+
+    public function show(Quiz $quiz)
     {
         return $quiz->load('questions.answers');
     }
