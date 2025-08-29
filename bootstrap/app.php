@@ -4,7 +4,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Session\Middleware\StartSession;
-use \Illuminate\Http\Middleware\HandleCors;
+use Illuminate\Http\Middleware\HandleCors;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,13 +15,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // $middleware->api(prepend: [
-        //     \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        //     StartSession::class,
-        // ]);
+        $middleware->api(prepend: [
+            // Ensure CORS is handled early for API routes
+            HandleCors::class,
+
+            // CRITICAL: StartSession MUST run BEFORE EnsureFrontendRequestsAreStateful
+            StartSession::class,
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
 
         $middleware->web(append: [
-            HandleCors::class,
+            VerifyCsrfToken::class,
         ]);
 
         $middleware->alias([

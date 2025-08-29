@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\Rule;
 use App\Enums\UserRole;
+use Illuminate\Support\Facades\Auth;
 
 class RegisteredUserController extends Controller
 {
@@ -32,12 +33,22 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Log the user in after registration to establish a session
+        Auth::login($user);
 
+        // Regenerate the session ID to prevent session fixation attacks
+        $request->session()->regenerate();
+
+        // Return only the desired user attributes for the frontend
         return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'message' => 'User registered successfully and token issued. Please check your email for verification.'
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'email_verified_at' => $user->email_verified_at,
+            ],
+            'message' => 'User registered successfully.'
         ], 201);
     }
 }

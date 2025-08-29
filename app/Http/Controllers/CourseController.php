@@ -6,9 +6,41 @@ use App\Models\Course;
 use Illuminate\Http\Request;
 use App\Enums\UserRole;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use App\Traits\LessonOrganiser;
+use App\Traits\NextLessonResolver;
 
 class CourseController extends Controller
 {
+    use LessonOrganiser, NextLessonResolver;
+
+    public function getCourseLessons(Request $request, int $courseId)
+    {
+        $authUser = $request->user();
+
+        // Get ordered lessons
+        $lessons = $this->getLessonsByCourseIdOrdered($courseId);
+
+        // Get the course instance
+        $course = Course::with('lessons')->find($courseId);
+
+        if (!$course) {
+            return response()->json([
+                'message' => 'Course not found.',
+                'lessons' => [],
+                'next_lesson' => null,
+            ], 404);
+        }
+
+        // Get next lesson for the user
+        $nextLesson = $this->findNextLesson($course, $authUser->id);
+
+        return response()->json([
+            'lessons' => $lessons,
+            'next_lesson' => $nextLesson,
+        ]);
+    }
+
     // List all courses (for students)
     public function index(Request $request)
     {
@@ -64,8 +96,10 @@ class CourseController extends Controller
     // Get featured courses (for homepage)
     public function featured()
     {
+        Log::info('Featured courses endpoint accessed.');
+
         $courses = Cache::remember('featured_courses', now()->addDay(), function () {
-            return \App\Models\Course::inRandomOrder()
+            return Course::inRandomOrder()
                 ->where('is_published', true)
                 ->take(10)
                 ->get();
@@ -96,7 +130,7 @@ class CourseController extends Controller
             'page' => 'nullable|integer|min:1',
         ]);
 
-        $query = \App\Models\Course::query()->where('is_published', true);
+        $query = Course::query()->where('is_published', true);
 
         if ($request->filled('search')) {
             $keyword = $request->input('search');
@@ -131,7 +165,34 @@ class CourseController extends Controller
     // Update an existing course
     public function update(Request $request, Course $course)
     {
-        $course->update($request->only('title', 'description'));
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'is_published' => 'nullable|boolean',
+        ]);
+
+        // Capture the old 'is_published' state before filling
+        $oldIsPublished = $course->is_published;
+
+        // Fill the course with validated data (title, description, and potentially is_published)
+        $course->fill($request->only('title', 'description', 'is_published'));
+
+        // Handle published_at logic based on the new 'is_published' value from the request
+        if ($request->filled('is_published')) {
+            $newIsPublished = $request->input('is_published');
+
+            if ($newIsPublished && !$course->published_at) {
+                // If 'is_published' is true and 'published_at' is null, set 'published_at'
+                $course->published_at = now();
+            } elseif (!$newIsPublished) {
+                // If 'is_published' is false, clear 'published_at'
+                $course->published_at = null;
+            }
+            // If 'newIsPublished' is true and 'published_at' is already set, do nothing.
+        }
+        // If 'is_published' is not filled in the request (i.e., it's null in request), do nothing to published_at.
+
+        $course->save(); // Save the changes
 
         return response()->json($course);
     }
