@@ -3,12 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Http\Middleware\HandleCors;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Http\Middleware\HandleCors;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,31 +15,32 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Apply shared middleware to both web and api groups
+        // Shared middleware
         $shared = [
-            StartSession::class,
             HandleCors::class,
-            EnsureFrontendRequestsAreStateful::class,
         ];
 
+        // Web middleware stack
         $middleware->web(prepend: $shared);
-        $middleware->api(prepend: $shared);
-
         $middleware->web(append: [
-            VerifyCsrfToken::class,
+            Illuminate\Session\Middleware\StartSession::class,
+            Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
             SubstituteBindings::class,
         ]);
 
+        // API middleware stack (stateless Sanctum token auth)
+        $middleware->api(prepend: $shared);
         $middleware->api(append: [
             SubstituteBindings::class,
         ]);
 
+        // Aliases
         $middleware->alias([
             'verified' => EnsureEmailIsVerified::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // You can customize exception rendering here if needed
+        // Customize exception rendering if needed
         // $exceptions->render(fn(Throwable $e, Request $request) => ...);
     })
     ->create();

@@ -5,16 +5,18 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\Rule;
 use App\Enums\UserRole;
-use Illuminate\Support\Facades\Auth;
 
 class RegisteredUserController extends Controller
 {
+    /**
+     * Handle user registration and return a Sanctum token.
+     */
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -33,13 +35,8 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        // Log the user in after registration to establish a session
-        Auth::login($user);
+        $token = $user->createToken('frontend')->plainTextToken;
 
-        // Regenerate the session ID to prevent session fixation attacks
-        $request->session()->regenerate();
-
-        // Return only the desired user attributes for the frontend
         return response()->json([
             'user' => [
                 'id' => $user->id,
@@ -48,6 +45,7 @@ class RegisteredUserController extends Controller
                 'role' => $user->role,
                 'email_verified_at' => $user->email_verified_at,
             ],
+            'token' => $token,
             'message' => 'User registered successfully.'
         ], 201);
     }
