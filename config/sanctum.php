@@ -1,7 +1,5 @@
 <?php
 
-use Laravel\Sanctum\Sanctum;
-
 return [
 
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', implode(',', array_filter([
@@ -12,6 +10,7 @@ return [
         'localhost:8000',
         '127.0.0.1:8000',
         env('APP_FRONTEND_URL') ? parse_url(env('APP_FRONTEND_URL'), PHP_URL_HOST) : null,
+        'lms-frontend-6qso.onrender.com',
     ])))),
 
     'guard' => ['web', 'api'],
