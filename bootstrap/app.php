@@ -6,6 +6,9 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,25 +18,31 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: [
-            // Ensure CORS is handled early for API routes
-            HandleCors::class,
-
-            // CRITICAL: StartSession MUST run BEFORE EnsureFrontendRequestsAreStateful
+        // Apply shared middleware to both web and api groups
+        $shared = [
             StartSession::class,
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
+            HandleCors::class,
+            EnsureFrontendRequestsAreStateful::class,
+        ];
+
+        $middleware->web(prepend: $shared);
+        $middleware->api(prepend: $shared);
 
         $middleware->web(append: [
             VerifyCsrfToken::class,
+            SubstituteBindings::class,
+        ]);
+
+        $middleware->api(append: [
+            SubstituteBindings::class,
         ]);
 
         $middleware->alias([
-            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+            'verified' => EnsureEmailIsVerified::class,
         ]);
-
-        //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })->create();
+        // You can customize exception rendering here if needed
+        // $exceptions->render(fn(Throwable $e, Request $request) => ...);
+    })
+    ->create();

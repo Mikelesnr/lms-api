@@ -50,8 +50,10 @@ Route::get('/progress/{course}', [ProgressController::class, 'show']);
 */
 
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return response()->json($request->user());
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -67,7 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/active-enrollments-count', [CompletedLessonController::class, 'activeEnrollmentCount']);
     Route::get('/me/completed-quizzes-count', [CompletedLessonController::class, 'completedQuizCount']);
     Route::get('/me/quiz-analytics', [CompletedLessonController::class, 'quizAnalyticsByCourse']);
-    Route::get('/courses/{user_id}', [CourseController::class, 'index']);
+    Route::get('/courses/user/{user_id}', [CourseController::class, 'index']);
 
     /*
     |--------------------------------------------------------------------------
