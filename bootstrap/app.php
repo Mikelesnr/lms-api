@@ -3,9 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Http\Middleware\HandleCors;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,25 +15,32 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: [
-            // Ensure CORS is handled early for API routes
+        // Shared middleware
+        $shared = [
             HandleCors::class,
+        ];
 
-            // CRITICAL: StartSession MUST run BEFORE EnsureFrontendRequestsAreStateful
-            StartSession::class,
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
-
+        // Web middleware stack
+        $middleware->web(prepend: $shared);
         $middleware->web(append: [
-            VerifyCsrfToken::class,
+            Illuminate\Session\Middleware\StartSession::class,
+            Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+            SubstituteBindings::class,
         ]);
 
+        // API middleware stack (stateless Sanctum token auth)
+        $middleware->api(prepend: $shared);
+        $middleware->api(append: [
+            SubstituteBindings::class,
+        ]);
+
+        // Aliases
         $middleware->alias([
-            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
+            'verified' => EnsureEmailIsVerified::class,
         ]);
-
-        //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })->create();
+        // Customize exception rendering if needed
+        // $exceptions->render(fn(Throwable $e, Request $request) => ...);
+    })
+    ->create();
