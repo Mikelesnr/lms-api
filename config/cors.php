@@ -9,6 +9,7 @@ return [
     'allowed_origins' => array_filter([
         env('APP_FRONTEND_URL'),
         'https://lms-frontend-6qso.onrender.com',
+        'https://lms-manage.netlify.app',
         'http://localhost:3000',
         'http://127.0.0.1:3000',
     ]),
