@@ -51,7 +51,7 @@ Route::get('/progress/{course}', [ProgressController::class, 'show']);
 
 
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/user', function (Request $request) {
+    Route::get('/auth/user', function (Request $request) {
         return $request->user();
     });
 });

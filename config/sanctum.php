@@ -6,7 +6,7 @@ return [
     'expiration' => null, // Tokens never expire unless manually revoked
 
     'middleware' => [
-        'verify_csrf_token' => App\Http\Middleware\VerifyCsrfToken::class,
-        'encrypt_cookies' => App\Http\Middleware\EncryptCookies::class,
+        'verify_csrf_token' => \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
+        'encrypt_cookies' => \Illuminate\Cookie\Middleware\EncryptCookies::class,
     ],
 ];
