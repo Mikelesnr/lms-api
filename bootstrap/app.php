@@ -6,6 +6,8 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use Illuminate\Http\Request;
+use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,6 +17,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust Render's proxy headers for proper HTTPS detection
+        $middleware->trustProxies(
+            at: ['127.0.0.1', '::1', 'localhost', 'lms-api-i62r.onrender.com'],
+            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR
+                | \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST
+                | \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT
+                | \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
+        );
+
         // Shared middleware
         $shared = [
             HandleCors::class,
@@ -23,8 +34,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // Web middleware stack
         $middleware->web(prepend: $shared);
         $middleware->web(append: [
-            Illuminate\Session\Middleware\StartSession::class,
-            Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
             SubstituteBindings::class,
         ]);
 
@@ -40,7 +49,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Customize exception rendering if needed
-        // $exceptions->render(fn(Throwable $e, Request $request) => ...);
+        $exceptions->render(function (Throwable $e) {
+            if (app()->environment('production')) {
+                return response()->json(['error' => 'Server error'], 500);
+            }
+
+            return response()->json([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+            ], 500);
+        });
     })
     ->create();
