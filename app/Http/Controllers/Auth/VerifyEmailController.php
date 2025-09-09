@@ -35,33 +35,13 @@ class VerifyEmailController extends Controller
     {
         $user = User::findOrFail($id);
 
-        // Check email hash
-        if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
-            return response()->view('errors.email_verification', [
-                'reason' => 'Email hash mismatch',
-                'user_id' => $id,
-                'expected_hash' => sha1($user->getEmailForVerification()),
-                'provided_hash' => $hash,
-                'url' => $request->fullUrl(),
-            ], 403);
-        }
+        $expectedHash = sha1($user->getEmailForVerification());
 
-        // Mark as verified if not already
-        if (! $user->hasVerifiedEmail()) {
-            $user->markEmailAsVerified();
-            event(new Verified($user));
-
-            return view('errors.email_verification', [
-                'reason' => 'Email verified successfully',
-                'user_id' => $id,
-                'url' => $request->fullUrl(),
-            ]);
-        }
-
-        // Already verified
         return view('errors.email_verification', [
-            'reason' => 'Email already verified',
+            'reason' => 'Diagnostic view — no verification performed',
             'user_id' => $id,
+            'expected_hash' => $expectedHash,
+            'provided_hash' => $hash,
             'url' => $request->fullUrl(),
         ]);
     }
