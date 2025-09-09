@@ -17,15 +17,20 @@ class VerifyEmailController extends Controller
     /**
      * Mark the authenticated user's email address as verified.
      */
-    public function __invoke(Request $request, $id, $hash): RedirectResponse
+    public function __invoke(Request $request, $id, $hash)
     {
         $user = User::findOrFail($id);
 
-        Log::info('Request URL: ' . request()->fullUrl());
-        Log::info('Expected signature: ' . URL::signatureHasValid(request()));
+        if (! URL::hasValidSignature($request)) {
+            return response()->view('errors.email_verification', [
+                'reason' => 'Invalid or expired signature',
+            ], 403);
+        }
 
         if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
-            throw new AuthorizationException();
+            return response()->view('errors.email_verification', [
+                'reason' => 'Email hash mismatch',
+            ], 403);
         }
 
         if (! $user->hasVerifiedEmail()) {
