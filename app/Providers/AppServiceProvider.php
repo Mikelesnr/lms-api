@@ -6,8 +6,6 @@ use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Routing\UrlGenerator;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,23 +33,6 @@ class AppServiceProvider extends ServiceProvider
             $email = $notifiable->getEmailForPasswordReset();
             return config('app.frontend_url') . "/auth/password-reset/{$token}?email={$email}";
         });
-
-        // ✉️ Customize email verification URL for frontend SPA
-        VerifyEmail::createUrlUsing(function ($notifiable) {
-            if (! $notifiable || ! method_exists($notifiable, 'getEmailForVerification')) {
-                return config('app.frontend_url') . '/auth/login?error=missing-user';
-            }
-
-            return URL::temporarySignedRoute(
-                'verification.verify',
-                now()->addMinutes(60),
-                [
-                    'id' => $notifiable->getKey(),
-                    'hash' => sha1($notifiable->getEmailForVerification()),
-                ]
-            );
-        });
-
 
         // 🛡️ Role-based access gates
         Gate::define('admin-only', fn(User $user) => $user->isAdmin());
