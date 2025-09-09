@@ -33,14 +33,9 @@ class VerifyEmailController extends Controller
 
     public function __invoke(Request $request, $id, $hash)
     {
-        $user = User::findOrFail($id);
-
-        $expectedHash = sha1($user->getEmailForVerification());
-
         return view('errors.email_verification', [
-            'reason' => 'Diagnostic view — no verification performed',
+            'reason' => 'Diagnostic mode — no validation performed',
             'user_id' => $id,
-            'expected_hash' => $expectedHash,
             'provided_hash' => $hash,
             'url' => $request->fullUrl(),
         ]);
