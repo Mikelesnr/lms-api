@@ -3,11 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Http\Middleware\HandleCors;
-use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Http\Request;
-use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(
-            at: ['127.0.0.1', '::1', 'localhost', 'tsviyo-backend.onrender.com'],
+            at: ['127.0.0.1', '::1', 'localhost', 'https://lms-api-i62r.onrender.com'],
             headers: Request::HEADER_X_FORWARDED_FOR
                 | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT
@@ -27,15 +23,15 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $e) {
-            // if (app()->environment('production')) {
-            //     return response()->json(['error' => 'Server error'], 500);
-            // }
+            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
 
-            return response()->json([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'exception' => get_class($e),
-            ], 500);
+            if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
+            return response()->json(['error' => 'Server error'], 500);
         });
     })
     ->create();
