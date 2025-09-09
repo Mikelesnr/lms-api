@@ -33,8 +33,7 @@ class RegisteredUserController extends Controller
             'role' => $request->role,
         ]);
 
-        // Send email verification
-        $user->sendEmailVerificationNotification();
+        event(new Registered($user));
 
         $token = $user->createToken('frontend')->plainTextToken;
 
