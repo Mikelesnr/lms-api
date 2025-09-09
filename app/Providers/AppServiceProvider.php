@@ -9,7 +9,6 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Notifications\VerifyEmail;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Routing\UrlGenerator;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,13 +27,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(UrlGenerator $url): void
     {
         // Force HTTPS in production
-        if (config('app.env') === 'production') {
-            Request::setTrustedProxies(
-                [Request::HEADER_X_FORWARDED_FOR],
-                Request::HEADER_X_FORWARDED_PROTO
-            );
-
-            URL::forceScheme('https');
+        if (app()->environment('production')) {
+            $url->forceScheme('https');
         }
 
         // 🔐 Customize password reset URL for frontend SPA
@@ -45,21 +39,15 @@ class AppServiceProvider extends ServiceProvider
 
         // ✉️ Customize email verification URL for frontend SPA
         VerifyEmail::createUrlUsing(function ($notifiable) {
-            if (! $notifiable || ! method_exists($notifiable, 'getEmailForVerification')) {
-                Log::warning('Verification email generation failed — missing or invalid notifiable.');
-                return config('app.frontend_url') . '/auth/login?error=missing-user';
-            }
-
             return URL::temporarySignedRoute(
                 'verification.verify',
-                now()->addMinutes(60),
+                now()->addMinutes(config('auth.verification.expire', 60)),
                 [
                     'id' => $notifiable->getKey(),
                     'hash' => sha1($notifiable->getEmailForVerification()),
                 ]
             );
         });
-
 
         // 🛡️ Role-based access gates
         Gate::define('admin-only', fn(User $user) => $user->isAdmin());

@@ -15,12 +15,16 @@ class VerifyEmailController extends Controller
     /**
      * Mark the authenticated user's email address as verified.
      */
-    public function __invoke(Request $request, $id, $hash): RedirectResponse
+    public function __invoke(Request $request): RedirectResponse
     {
-        $user = User::findOrFail($id);
+        $user = User::findOrFail($request->route('id'));
 
-        if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
             throw new AuthorizationException();
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect(config('app.frontend_url') . '/email-verified?status=already');
         }
 
         if (! $user->hasVerifiedEmail()) {
