@@ -17,36 +17,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Trust Render's proxy headers for proper HTTPS detection
         $middleware->trustProxies(
-            at: ['127.0.0.1', '::1', 'localhost', 'lms-api-i62r.onrender.com'],
-            headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR
-                | \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST
-                | \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT
-                | \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
+            at: ['127.0.0.1', '::1', 'localhost', 'tsviyo-backend.onrender.com'],
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
         );
-
-        // Shared middleware
-        $shared = [
-            HandleCors::class,
-        ];
-
-        // Web middleware stack
-        $middleware->web(prepend: $shared);
-        $middleware->web(append: [
-            SubstituteBindings::class,
-        ]);
-
-        // API middleware stack (stateless Sanctum token auth)
-        $middleware->api(prepend: $shared);
-        $middleware->api(append: [
-            SubstituteBindings::class,
-        ]);
-
-        // Aliases
-        $middleware->alias([
-            'verified' => EnsureEmailIsVerified::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $e) {

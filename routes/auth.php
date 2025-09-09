@@ -29,7 +29,7 @@ Route::get('/verify-email/{id}/{hash}', [VerifyEmailController::class, '__invoke
     ->name('verification.verify');
 
 Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-    ->middleware(['auth:sanctum', 'throttle:6,1'])
+    ->middleware(['auth:sanctum'])
     ->name('verification.send');
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
