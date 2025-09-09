@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Log;
 
 class VerifyEmailController extends Controller
 {
@@ -18,6 +20,9 @@ class VerifyEmailController extends Controller
     public function __invoke(Request $request, $id, $hash): RedirectResponse
     {
         $user = User::findOrFail($id);
+
+        Log::info('Request URL: ' . request()->fullUrl());
+        Log::info('Expected signature: ' . URL::signatureHasValid(request()));
 
         if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
             throw new AuthorizationException();
