@@ -50,9 +50,9 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $e) {
-            if (app()->environment('production')) {
-                return response()->json(['error' => 'Server error'], 500);
-            }
+            // if (app()->environment('production')) {
+            //     return response()->json(['error' => 'Server error'], 500);
+            // }
 
             return response()->json([
                 'error' => true,
