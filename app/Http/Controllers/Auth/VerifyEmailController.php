@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Http\Request;
 use App\Models\User;
 
 class VerifyEmailController extends Controller
@@ -15,16 +13,12 @@ class VerifyEmailController extends Controller
     /**
      * Mark the authenticated user's email address as verified.
      */
-    public function __invoke(Request $request): RedirectResponse
+    public function __invoke($id, $hash): RedirectResponse
     {
-        $user = User::findOrFail($request->route('id'));
+        $user = User::findOrFail($id);
 
-        if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
+        if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
             throw new AuthorizationException();
-        }
-
-        if ($user->hasVerifiedEmail()) {
-            return redirect(config('app.frontend_url') . '/email-verified?status=already');
         }
 
         if (! $user->hasVerifiedEmail()) {
