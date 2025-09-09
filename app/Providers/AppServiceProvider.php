@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\Request;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
@@ -27,8 +28,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(UrlGenerator $url): void
     {
         // Force HTTPS in production
-        if (app()->environment('production')) {
-            $url->forceScheme('https');
+        if (config('app.env') === 'production') {
+            Request::setTrustedProxies(
+                [Request::HEADER_X_FORWARDED_FOR],
+                Request::HEADER_X_FORWARDED_PROTO
+            );
+
+            URL::forceScheme('https');
         }
 
         // 🔐 Customize password reset URL for frontend SPA
