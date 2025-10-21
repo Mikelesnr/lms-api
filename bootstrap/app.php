@@ -3,9 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Http\Middleware\HandleCors;
-use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,32 +13,25 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Shared middleware
-        $shared = [
-            HandleCors::class,
-        ];
-
-        // Web middleware stack
-        $middleware->web(prepend: $shared);
-        $middleware->web(append: [
-            Illuminate\Session\Middleware\StartSession::class,
-            Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-            SubstituteBindings::class,
-        ]);
-
-        // API middleware stack (stateless Sanctum token auth)
-        $middleware->api(prepend: $shared);
-        $middleware->api(append: [
-            SubstituteBindings::class,
-        ]);
-
-        // Aliases
-        $middleware->alias([
-            'verified' => EnsureEmailIsVerified::class,
-        ]);
+        $middleware->trustProxies(
+            at: ['127.0.0.1', '::1', 'localhost', 'https://lms-api-i62r.onrender.com'],
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        // Customize exception rendering if needed
-        // $exceptions->render(fn(Throwable $e, Request $request) => ...);
+        $exceptions->render(function (Throwable $e) {
+            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
+
+            if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
+            return response()->json(['error' => 'Server error'], 500);
+        });
     })
     ->create();
